@@ -15,6 +15,7 @@ class SearchPageExtension extends SiteTreeExtension
     private static $allowed_search_engines;
     private static $search_get_var_name = 'q';
     private static $search_source_get_var_name = 'p';
+    private static $search_engine_field_insert_after = 'MenuTitle';
 
     private static $has_one = [
         'SearchEngine' => SearchEngine::class
@@ -76,7 +77,8 @@ class SearchPageExtension extends SiteTreeExtension
                 'A search engine must be configured before you can select it here.'
             );
         }
-        $fields->insertAfter('MenuTitle', $engineField);
+        $insertAfter = $this->getOwner()->config()->get('search_engine_field_insert_after');
+        $fields->insertAfter($insertAfter, $engineField);
     }
 
     public function updateSettingsFields(FieldList $fields)
