@@ -14,6 +14,8 @@ class SearchEnginesBuildTask extends BuildTask
     protected $title = "Build Search Engine Manifests";
     protected $description = "Only needs to be called once on production, or to re-build the search engines";
 
+    private static $segment = 'search-manifest-build';
+
     public function run($request)
     {
         set_time_limit(0);

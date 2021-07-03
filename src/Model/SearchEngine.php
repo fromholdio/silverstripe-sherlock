@@ -9,12 +9,20 @@ use Sheadawson\DependentDropdown\Forms\DependentDropdownField;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Forms\DropdownField;
+use SilverStripe\Forms\GridField\GridField;
+use SilverStripe\Forms\GridField\GridFieldAddNewButton;
+use SilverStripe\Forms\GridField\GridFieldConfig_RecordViewer;
+use SilverStripe\Forms\GridField\GridFieldDeleteAction;
+use SilverStripe\Forms\GridField\GridFieldEditButton;
+use SilverStripe\Forms\GridField\GridFieldViewButton;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Permission;
+use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Versioned\Versioned;
 
-class SearchEngine extends DataObject
+class SearchEngine extends DataObject implements PermissionProvider
 {
     private static $table_name = 'SearchEngine';
     private static $singular_name = 'Search Engine';
@@ -94,7 +102,8 @@ class SearchEngine extends DataObject
             'SortMode',
             'SortDirection',
             'DirectSortMode',
-            'DirectSortDirection'
+            'DirectSortDirection',
+            'Logs'
         ]);
 
         if (!$this->isInDB()) {
@@ -128,7 +137,7 @@ class SearchEngine extends DataObject
             'direct'
         );
         if ($directSortFields) {
-            $fields->addFieldsToTab('Root.Main', $directSortFields);
+            $fields->addFieldsToTab('Root.Config', $directSortFields);
         }
 
         $sortFields = $this->getSortFields(
@@ -137,10 +146,29 @@ class SearchEngine extends DataObject
             'fields'
         );
         if ($sortFields) {
-            $fields->addFieldsToTab('Root.Main', $sortFields);
+            $fields->addFieldsToTab('Root.Config', $sortFields);
         }
 
-        $fields->addFieldToTab('Root.Main', $searchPageField);
+        $fields->addFieldToTab('Root.Config', $searchPageField);
+
+        if (Permission::check('VIEW_SEARCH_LOGS'))
+        {
+            $logsField = GridField::create(
+                'Logs',
+                'Search Logs',
+                $this->Logs(),
+                $logsConfig = GridFieldConfig_RecordViewer::create(null, 15, true, false)
+            );
+
+            $logsConfig->removeComponentsByType([
+                GridFieldEditButton::class,
+                GridFieldAddNewButton::class,
+                GridFieldDeleteAction::class,
+                GridFieldViewButton::class
+            ]);
+
+            $fields->addFieldToTab('Root.Main', $logsField);
+        }
 
         return $fields;
     }
@@ -718,5 +746,34 @@ class SearchEngine extends DataObject
         } catch (\Exception $exception) {
             return false;
         }
+    }
+
+    public function canCreate($member = null, $context = [])
+    {
+        return false;
+    }
+
+    public function canView($member = null)
+    {
+        return Permission::checkMember($member, 'MANAGE_SEARCH');
+    }
+
+    public function canEdit($member = null)
+    {
+        return Permission::checkMember($member, 'MANAGE_SEARCH');
+    }
+
+    public function canDelete($member = null)
+    {
+        return false;
+    }
+
+    public function providePermissions() {
+        return [
+            'MANAGE_SEARCH' => array(
+                'name' => 'Manage search',
+                'category' => 'Search engines',
+            )
+        ];
     }
 }

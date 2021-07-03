@@ -4,8 +4,10 @@ namespace Fromholdio\Sherlock\Model;
 
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Permission;
+use SilverStripe\Security\PermissionProvider;
 
-class SearchLog extends DataObject
+class SearchLog extends DataObject implements PermissionProvider
 {
     private static $table_name = 'SearchLog';
     private static $singular_name = 'Search Log';
@@ -37,5 +39,34 @@ class SearchLog extends DataObject
     public function getDurationSummary()
     {
         return round($this->Duration, 5);
+    }
+
+    public function canCreate($member = null, $context = [])
+    {
+        return false;
+    }
+
+    public function canView($member = null)
+    {
+        return Permission::checkMember($member, 'VIEW_SEARCH_LOGS');
+    }
+
+    public function canEdit($member = null)
+    {
+        return false;
+    }
+
+    public function canDelete($member = null)
+    {
+        return false;
+    }
+
+    public function providePermissions() {
+        return [
+            'VIEW_SEARCH_LOGS' => [
+                'name' => 'View search logs',
+                'category' => 'Search engines',
+            ]
+        ];
     }
 }
