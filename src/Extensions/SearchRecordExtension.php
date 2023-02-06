@@ -43,6 +43,16 @@ class SearchRecordExtension extends DataExtension
             }
         }
     }
+    
+    public function onAfterPublishRecursive()
+    {
+        $engines = $this->getOwner()->getSearchEngines();
+        if ($engines) {
+            foreach ($engines as $engine) {
+                $engine->publishEntry($this->getOwner());
+            }
+        }
+    }
 
     public function onAfterDelete()
     {
@@ -68,7 +78,7 @@ class SearchRecordExtension extends DataExtension
             }
         }
     }
-
+    
     public function getSearchEngines()
     {
         $classes = $this->getOwner()->getSearchEngineClasses();
