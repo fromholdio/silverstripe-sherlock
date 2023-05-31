@@ -13,16 +13,14 @@
 		"homepage": "https://fromhold.io"
 	}],
     "require": {
-        "php": ">=5.6",
-        "silverstripe/vendor-plugin": "^1.0",
-        "silverstripe/cms": "^4.0",
-        "fromholdio/silverstripe-commonancestor": "^1.0",
-        "sheadawson/silverstripe-dependentdropdownfield": "^2.0.3",
-        "symbiote/silverstripe-gridfieldextensions": "^3.0"
+        "silverstripe/cms": "^4 || ^5",
+        "fromholdio/silverstripe-commonancestor": "^1",
+        "sheadawson/silverstripe-dependentdropdownfield": "^2 || ^3",
+        "symbiote/silverstripe-gridfieldextensions": "^3 || ^4"
     },
     "suggest": {
-        "fromholdio/silverstripe-fulltext-innodb": "^1.0",
-        "fromholdio/silverstripe-fulltext-filters": "^1.0"
+        "fromholdio/silverstripe-fulltext-innodb": "A small SilverStripe module that enables usage of fulltext indexes with the InnoDB engine. ",
+        "fromholdio/silverstripe-fulltext-filters": "This module adds three fulltext SearchFilters to your SilverStripe project: FulltextBoolean, FulltextRelevance and FulltextBooleanRelevance"
     },
 	"autoload": {
 		"psr-4": {
