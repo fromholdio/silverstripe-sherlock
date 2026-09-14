@@ -493,7 +493,7 @@ class SearchEngine extends DataObject implements PermissionProvider
         return ($this->config()->get('engine_log_enabled'));
     }
 
-    protected function getEntryFilter($record)
+    protected function getEntryFilter($record): ?array
     {
         return null;
     }
