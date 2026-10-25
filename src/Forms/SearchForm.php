@@ -132,13 +132,41 @@ class SearchForm extends Form
 
         $phrase = $data['Phrase'];
 
-        if (isset($data['SourcePageID'])) {
-            $sourcePageID = $data['SourcePageID'];
-        } else {
-            $sourcePageID = 0;
+        $sourcePageID = $this->getSubmittedSourcePageID($data);
+        if (is_null($sourcePageID)) {
+            $form->sessionError('Invalid Source Page ID');
+            return $this->getController()->redirectBack();
         }
 
         $searchLink = $engine->Link($phrase, $sourcePageID);
         return $this->getController()->redirect($searchLink);
+    }
+
+    /**
+     * Get the source page ID from submitted form data, where 0 means no source page.
+     *
+     * A missing, null or empty value gives 0. Otherwise the value must be a
+     * non-negative integer, or a string of digits without a sign, whitespace or
+     * leading zeros (other than "0" itself) that fits in an integer, as the hidden
+     * field renders it. Any other value gives null, so the submission can be rejected.
+     */
+    protected function getSubmittedSourcePageID(array $data): ?int
+    {
+        $value = $data['SourcePageID'] ?? null;
+        if (is_null($value) || $value === '') {
+            return 0;
+        }
+
+        if (is_int($value)) {
+            return $value >= 0 ? $value : null;
+        }
+
+        if (!is_string($value) || !preg_match('/\A(?:0|[1-9][0-9]*)\z/', $value)) {
+            return null;
+        }
+
+        //digits beyond PHP_INT_MAX fail here rather than being clamped to it
+        $sourcePageID = filter_var($value, FILTER_VALIDATE_INT);
+        return $sourcePageID === false ? null : $sourcePageID;
     }
 }
