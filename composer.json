@@ -18,6 +18,9 @@
         "sheadawson/silverstripe-dependentdropdownfield": "^4",
         "symbiote/silverstripe-gridfieldextensions": "^5"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^11.3"
+    },
     "suggest": {
         "fromholdio/silverstripe-fulltext-innodb": "A small SilverStripe module that enables usage of fulltext indexes with the InnoDB engine. ",
         "fromholdio/silverstripe-fulltext-filters": "This module adds three fulltext SearchFilters to your SilverStripe project: FulltextBoolean, FulltextRelevance and FulltextBooleanRelevance"
@@ -25,6 +28,12 @@
 	"autoload": {
 		"psr-4": {
 			"Fromholdio\\Sherlock\\": "src/"
+		}
+	},
+	"config": {
+		"allow-plugins": {
+			"composer/installers": true,
+			"silverstripe/vendor-plugin": true
 		}
 	},
 	"prefer-stable": true,
