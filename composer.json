@@ -13,10 +13,13 @@
 		"homepage": "https://fromhold.io"
 	}],
     "require": {
-        "silverstripe/cms": "^4 || ^5",
-        "fromholdio/silverstripe-commonancestor": "^1",
-        "sheadawson/silverstripe-dependentdropdownfield": "^2 || ^3",
-        "symbiote/silverstripe-gridfieldextensions": "^3 || ^4"
+        "silverstripe/cms": "^6",
+        "fromholdio/silverstripe-commonancestor": "^1.2",
+        "sheadawson/silverstripe-dependentdropdownfield": "^4",
+        "symbiote/silverstripe-gridfieldextensions": "^5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.3"
     },
     "suggest": {
         "fromholdio/silverstripe-fulltext-innodb": "A small SilverStripe module that enables usage of fulltext indexes with the InnoDB engine. ",
@@ -25,6 +28,12 @@
 	"autoload": {
 		"psr-4": {
 			"Fromholdio\\Sherlock\\": "src/"
+		}
+	},
+	"config": {
+		"allow-plugins": {
+			"composer/installers": true,
+			"silverstripe/vendor-plugin": true
 		}
 	},
 	"prefer-stable": true,

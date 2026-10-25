@@ -19,16 +19,16 @@ At a high level this aims to:
 
 ## Requirements
 
-* [silverstripe-cms](https://github.com/silverstripe/silverstripe-cms) ^4
-* [symbiote/silverstripe-gridfieldextensions](https://github.com/symbiote/silverstripe-gridfieldextensions) ^3.0
-* [sheadawson/silverstripe-dependentdropdownfield](https://github.com/sheadawson/silverstripe-dependentdropdownfield) ^2.0
-* [fromholdio/silverstripe-commonancestor](https://github.com/fromholdio/silverstripe-commonancestor) ^1.0
+* [silverstripe-cms](https://github.com/silverstripe/silverstripe-cms) ^6
+* [symbiote/silverstripe-gridfieldextensions](https://github.com/symbiote/silverstripe-gridfieldextensions) ^5
+* [sheadawson/silverstripe-dependentdropdownfield](https://github.com/sheadawson/silverstripe-dependentdropdownfield) ^4
+* [fromholdio/silverstripe-commonancestor](https://github.com/fromholdio/silverstripe-commonancestor) ^1.2
 
 ## Recommended
 
-* [fromholdio/silverstripe-fulltext-innodb](https://github.com/fromholdio/silverstripe-fulltext-innodb) ^1.0
-* [fromholdio/silverstripe-fulltext-filters](https://github.com/fromholdio/silverstripe-fulltext-filters) ^1.0
-* [fromholdio/silverstripe-sherlock-pages](https://github.com/fromholdio/silverstripe-sherlock-pages) ^1.0
+* [fromholdio/silverstripe-fulltext-innodb](https://github.com/fromholdio/silverstripe-fulltext-innodb)
+* [fromholdio/silverstripe-fulltext-filters](https://github.com/fromholdio/silverstripe-fulltext-filters)
+* [fromholdio/silverstripe-sherlock-pages](https://github.com/fromholdio/silverstripe-sherlock-pages)
 
 ## Installation
 
@@ -40,6 +40,19 @@ Detail and usage examples to come.
 
 See [fromholdio/silverstripe-sherlock-pages](https://github.com/fromholdio/silverstripe-sherlock-pages) for usage example.
 
+## Running the tests
+
+The PHPUnit suite lives in `tests/php`. The tests save records to a temporary test database, so the database user must be able to create databases, as `root` can.
+
+From a standalone clone of this module:
+
+```sh
+composer install
+SS_DATABASE_CLASS=MySQLDatabase SS_DATABASE_SERVER=127.0.0.1 SS_DATABASE_USERNAME=root \
+SS_DATABASE_PASSWORD=root SS_DATABASE_NAME=SS_tests vendor/bin/phpunit
+```
+
+The suite starts from the CMS test bootstrap, which creates an `app/` folder holding the `Page` and `PageController` classes the CMS needs when the module is installed on its own. Git ignores that folder.
 
 ## To Do
 

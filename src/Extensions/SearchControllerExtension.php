@@ -7,7 +7,7 @@ use SilverStripe\Core\Extension;
 
 class SearchControllerExtension extends Extension
 {
-    public function onBeforeInit()
+    public function onBeforeInit(): void
     {
         $getVarName = $this->getOwner()->data()->getSearchGetVarName();
         $phrase = $this->getOwner()->getRequest()->getVar($getVarName);
@@ -22,7 +22,7 @@ class SearchControllerExtension extends Extension
         }
     }
 
-    public function onAfterInit()
+    public function onAfterInit(): void
     {
         $this->getOwner()->getSearchResults();
     }
@@ -49,7 +49,7 @@ class SearchControllerExtension extends Extension
         return $this->getOwner()->searchSourcePageID;
     }
 
-    public function setSearchAction(SearchAction $search = null)
+    public function setSearchAction(?SearchAction $search = null)
     {
         $this->getOwner()->searchAction = $search;
         return $this->getOwner();
@@ -68,11 +68,13 @@ class SearchControllerExtension extends Extension
             if (!$phrase) {
                 return null;
             }
+
             $sourcePageID = $this->getOwner()->getSearchSourcePageID();
             $engine = $this->getOwner()->data()->SearchEngine();
             if (!$engine || !$engine->exists()) {
                 return null;
             }
+
             $search = $engine->search($phrase, $sourcePageID);
             $this->getOwner()->setSearchAction($search);
         }

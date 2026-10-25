@@ -2,9 +2,13 @@
 
 namespace Fromholdio\Sherlock\Model;
 
-use Fromholdio\Sherlock\SearchAction;
+use Exception;
 use Fromholdio\CommonAncestor\CommonAncestor;
 use Fromholdio\Sherlock\Extensions\SearchPageExtension;
+use Fromholdio\Sherlock\SearchAction;
+use InvalidArgumentException;
+use LogicException;
+use Override;
 use Sheadawson\DependentDropdown\Forms\DependentDropdownField;
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Core\ClassInfo;
@@ -16,23 +20,28 @@ use SilverStripe\Forms\GridField\GridFieldDeleteAction;
 use SilverStripe\Forms\GridField\GridFieldEditButton;
 use SilverStripe\Forms\GridField\GridFieldViewButton;
 use SilverStripe\Forms\ReadonlyField;
-use SilverStripe\ORM\ArrayList;
+use SilverStripe\Model\List\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Versioned\Versioned;
+use UnexpectedValueException;
 
 class SearchEngine extends DataObject implements PermissionProvider
 {
-    private static $table_name = 'SearchEngine';
-    private static $singular_name = 'Search Engine';
-    private static $plural_name = 'Search Engines';
+    private static string $table_name = 'SearchEngine';
+
+    private static string $singular_name = 'Search Engine';
+
+    private static string $plural_name = 'Search Engines';
 
     private static $engine_entry_class;
-    private static $engine_config;
-    private static $engine_log_enabled = true;
 
-    private static $db = [
+    private static $engine_config;
+
+    private static bool $engine_log_enabled = true;
+
+    private static array $db = [
         'Title' => 'Varchar',
         'Description' => 'Varchar',
         'SortMode' => 'Varchar(30)',
@@ -41,47 +50,49 @@ class SearchEngine extends DataObject implements PermissionProvider
         'DirectSortDirection' => 'Varchar(10)'
     ];
 
-    private static $has_one = [
+    private static array $has_one = [
         'DefaultSearchPage' => SiteTree::class
     ];
 
-    private static $has_many = [
+    private static array $has_many = [
         'Logs' => SearchLog::class
     ];
 
-    private static $summary_fields = [
+    private static array $summary_fields = [
         'Title',
         'Description',
         'EntriesCount' => 'Entries'
     ];
 
-    private static $cascade_deletes = [
+    private static array $cascade_deletes = [
         'getEntries',
         'Logs'
     ];
 
     protected static $search_page_classes = [];
 
-    public static function register_search_page_class($class)
+    public static function register_search_page_class($class): void
     {
         self::$search_page_classes[$class] = $class;
     }
 
-    public function Link($searchPhrase = null, int $sourcePageID = null)
+    public function Link($searchPhrase = null, ?int $sourcePageID = null)
     {
         $searchPage = $this->getTargetSearchPage();
         if (!$searchPage) {
             return null;
         }
+
         return $searchPage->SearchLink($searchPhrase, $sourcePageID);
     }
 
-    public function AbsoluteLink($searchPhrase = null, int $sourcePageID = null)
+    public function AbsoluteLink($searchPhrase = null, ?int $sourcePageID = null)
     {
         $searchPage = $this->getTargetSearchPage();
         if (!$searchPage) {
             return null;
         }
+
         return $searchPage->SearchAbsoluteLink($searchPhrase, $sourcePageID);
     }
 
@@ -91,9 +102,11 @@ class SearchEngine extends DataObject implements PermissionProvider
         if (!$entries) {
             return 0;
         }
+
         return $entries->count();
     }
 
+    #[Override]
     public function getCMSFields()
     {
         $fields = parent::getCMSFields();
@@ -122,8 +135,7 @@ class SearchEngine extends DataObject implements PermissionProvider
             $searchPageField->setDescription(
                 'Set a default search page that searches of this engine should be redirected to.'
             );
-        }
-        else {
+        } else {
             $searchPageField = ReadonlyField::create(
                 'DefaultSearchPageInfo',
                 $this->fieldLabel('DefaultSearchPage'),
@@ -151,8 +163,7 @@ class SearchEngine extends DataObject implements PermissionProvider
 
         $fields->addFieldToTab('Root.Config', $searchPageField);
 
-        if (Permission::check('VIEW_SEARCH_LOGS'))
-        {
+        if (Permission::check('VIEW_SEARCH_LOGS')) {
             $logsField = GridField::create(
                 'Logs',
                 'Search Logs',
@@ -173,7 +184,8 @@ class SearchEngine extends DataObject implements PermissionProvider
         return $fields;
     }
 
-    public function onBeforeWrite()
+    #[Override]
+    protected function onBeforeWrite()
     {
         parent::onBeforeWrite();
         if ($this->DefaultSearchPageID) {
@@ -184,33 +196,37 @@ class SearchEngine extends DataObject implements PermissionProvider
         }
     }
 
-    protected function addStarsToKeywords($keywords)
+    protected function addStarsToKeywords($keywords): string
     {
         if (!trim($keywords)) {
             return "";
         }
+
         // Add * to each keyword
         $splitWords = preg_split("/ +/", trim($keywords));
         $newWords = [];
-        for ($i = 0; $i < count($splitWords); $i++) {
+        $counter = count($splitWords);
+        for ($i = 0; $i < $counter; ++$i) {
             $word = $splitWords[$i];
             if ($word[0] == '"') {
                 while (++$i < count($splitWords)) {
                     $subword = $splitWords[$i];
                     $word .= ' ' . $subword;
-                    if (substr($subword, -1) == '"') {
+                    if (str_ends_with($subword, '"')) {
                         break;
                     }
                 }
             } else {
                 $word .= '*';
             }
+
             $newWords[] = $word;
         }
+
         return implode(" ", $newWords);
     }
 
-    public function search(string $phrase = null, int $searchPageID = null)
+    public function search(?string $phrase = null, ?int $searchPageID = null)
     {
         return SearchAction::create(
             $phrase,
@@ -227,7 +243,7 @@ class SearchEngine extends DataObject implements PermissionProvider
         }
 
         if (!is_string($phrase)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Invalid $phrase passed to ' . ClassInfo::class_name($this) . '::getDirectSearchResults(). '
                 . 'Supplied ' . gettype($phrase) . ' but expected variable type null or string.'
             );
@@ -244,10 +260,12 @@ class SearchEngine extends DataObject implements PermissionProvider
                 if ($directSortSQL) {
                     $directResults->sort($directSortSQL);
                 }
+
                 $directMatchFirst = $directResults->first();
                 return $directMatchFirst->getRecord();
             }
         }
+
         return null;
     }
 
@@ -258,7 +276,7 @@ class SearchEngine extends DataObject implements PermissionProvider
         }
 
         if (!is_string($phrase)) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Invalid $phrase passed to ' . ClassInfo::class_name($this) . '::getSearchResults(). '
                 . 'Supplied ' . gettype($phrase) . ' but expected variable type null or string.'
             );
@@ -275,6 +293,7 @@ class SearchEngine extends DataObject implements PermissionProvider
                 if ($sortSQL) {
                     $searchResults = $searchResults->sort($sortSQL);
                 }
+
                 return $this->getRecords($searchResults);
             }
         }
@@ -289,13 +308,12 @@ class SearchEngine extends DataObject implements PermissionProvider
         $entryIsVersioned = $class::singleton()->hasExtension(Versioned::class);
         $recordIsVersioned = $record->hasExtension(Versioned::class);
 
-        if (
-            ($entryIsVersioned && !$recordIsVersioned)
+        if (($entryIsVersioned && !$recordIsVersioned)
             || (!$entryIsVersioned && $recordIsVersioned)
         ) {
-            throw new \LogicException(
+            throw new LogicException(
                 'Your SearchEngine ' . static::class . ' has an entry class of '
-                . $class . ' and a record class of ' . get_class($record) . '. The entry class '
+                . $class . ' and a record class of ' . $record::class . '. The entry class '
                 . ' and record class must either both be extended by Versioned or both not.'
             );
         }
@@ -304,7 +322,8 @@ class SearchEngine extends DataObject implements PermissionProvider
         $filter = $this->getEntryFilter($record);
         if ($filter && is_array($filter)) {
             $entries = $entries->filter($filter);
-        };
+        }
+        ;
         return $entries->first();
     }
 
@@ -327,22 +346,23 @@ class SearchEngine extends DataObject implements PermissionProvider
                 if ($filter && is_array($filter)) {
                     $draftEntries = $draftEntries->filter($filter);
                 }
+
                 $draftEntry = $draftEntries->first();
-                if ($draftEntry && $draftEntry->exists()) {
+                if ($draftEntry instanceof DataObject && $draftEntry->exists()) {
                     $entry->ID = $draftEntry->ID;
                 }
             }
         }
+
         return $entry;
     }
 
-    public function addEntry($record)
+    public function addEntry($record): void
     {
         if ($record->hasExtension(Versioned::class)) {
             if ($record->isPublished()) {
-
                 $publishedRecord = Versioned::get_by_stage(
-                    get_class($record),
+                    $record::class,
                     Versioned::LIVE
                 )->byID($record->ID);
 
@@ -350,27 +370,28 @@ class SearchEngine extends DataObject implements PermissionProvider
                 $this->publishEntry($publishedRecord);
             }
         }
+
         $this->writeEntry($record);
     }
 
-    public function writeEntry($record)
+    public function writeEntry($record): void
     {
         $valid = $this->isValidRecord($record);
         if ($valid) {
             $entry = $this->loadRecord($record);
             $entry->write();
-        }
-        else {
+        } else {
             $this->deleteEntry($record);
         }
     }
 
-    public function publishEntry($record)
+    public function publishEntry($record): void
     {
         $class = $this->getEntryClass();
         if (!$class::singleton()->hasExtension(Versioned::class)) {
             return;
         }
+
         $valid = $this->isValidRecord($record);
         if ($valid) {
             $entry = $this->loadRecord($record);
@@ -378,23 +399,22 @@ class SearchEngine extends DataObject implements PermissionProvider
                 Versioned::DRAFT,
                 Versioned::LIVE
             );
-        }
-        else {
+        } else {
             $this->unpublishEntry($record);
         }
     }
 
-    public function unpublishEntry($record)
+    public function unpublishEntry($record): void
     {
         $class = $this->getEntryClass();
         if (!$class::singleton()->hasExtension(Versioned::class)) {
             return;
         }
+
         $entry = $this->getEntry($record);
         if ($entry && $entry->exists()) {
             $entry->doUnpublish();
-        }
-        else {
+        } else {
             $publishedEntries = Versioned::get_by_stage(
                 $class,
                 Versioned::LIVE
@@ -402,14 +422,15 @@ class SearchEngine extends DataObject implements PermissionProvider
             $filter = $this->getEntryFilter($record);
             if ($filter && is_array($filter)) {
                 $publishedEntries = $publishedEntries->filter($filter);
-            };
+            }
+            ;
             if ($publishedEntries->count() > 0) {
                 $publishedEntries->first()->doUnpublish();
             }
         }
     }
 
-    public function deleteEntry($record)
+    public function deleteEntry($record): void
     {
         $entry = $this->getEntry($record);
         if ($entry && $entry->exists()) {
@@ -425,8 +446,9 @@ class SearchEngine extends DataObject implements PermissionProvider
     public function loadRecord($record, $entry = null)
     {
         if (!$entry) {
-            $entry = $this->findOrMakeEntry($record);
+            return $this->findOrMakeEntry($record);
         }
+
         return $entry;
     }
 
@@ -441,10 +463,12 @@ class SearchEngine extends DataObject implements PermissionProvider
         if (!$entries) {
             $entries = $this->getEntries();
         }
+
         $records = [];
         foreach ($entries as $entry) {
             $records[] = $entry->getRecord();
         }
+
         return ArrayList::create($records);
     }
 
@@ -453,10 +477,12 @@ class SearchEngine extends DataObject implements PermissionProvider
         if ($this->DefaultSearchPageID) {
             return $this->DefaultSearchPage();
         }
+
         $pages = $this->getAvailableSearchPages();
         if ($pages) {
             return $pages->first();
         }
+
         return null;
     }
 
@@ -465,40 +491,44 @@ class SearchEngine extends DataObject implements PermissionProvider
         return ($this->config()->get('engine_log_enabled'));
     }
 
-    protected function getEntryFilter($record)
+    protected function getEntryFilter($record): ?array
     {
         return null;
     }
 
-    protected function getDirectSearchFilter($phrase)
+    protected function getDirectSearchFilter($phrase): ?array
     {
         $config = $this->getEngineConfig('direct');
         return $this->buildFilter($config, $phrase);
     }
 
-    protected function getSearchFilter($phrase)
+    protected function getSearchFilter($phrase): ?array
     {
         $config = $this->getEngineConfig('fields');
         return $this->buildFilter($config, $phrase);
     }
 
-    protected function buildFilter($config, $phrase)
+    protected function buildFilter($config, $phrase): ?array
     {
         if (!$config) {
             return null;
         }
+
         if (!is_array($config)) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 'Engine configs must be an array on ' . static::class
             );
         }
+
         $filter = [];
         foreach ($config as $field) {
             $filter[$field] = $phrase;
         }
+
         if (count($filter) < 1) {
-            $filter = null;
+            return null;
         }
+
         return $filter;
     }
 
@@ -506,20 +536,21 @@ class SearchEngine extends DataObject implements PermissionProvider
     {
         $config = $this->config()->get('engine_config');
         if (!$config) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 '$engine_config must be set on ' . static::class
             );
         }
+
         if (!is_array($config)) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 '$engine_config must be an array on ' . static::class
             );
         }
-        if (
-            !isset($config['direct'])
+
+        if (!isset($config['direct'])
             && !isset($config['fields'])
         ) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 'You must set at least one of $fields or $direct '
                 . 'values in $engine_config on ' . static::class
             );
@@ -528,8 +559,7 @@ class SearchEngine extends DataObject implements PermissionProvider
         if ($key) {
             if (isset($config[$key])) {
                 $config = $config[$key];
-            }
-            else {
+            } else {
                 $config = null;
             }
         }
@@ -543,12 +573,10 @@ class SearchEngine extends DataObject implements PermissionProvider
         if ($key === 'direct') {
             $mode = $this->DirectSortMode;
             $direction = $this->DirectSortDirection;
-        }
-        else if ($key === 'fields') {
+        } elseif ($key === 'fields') {
             $mode = $this->SortMode;
             $direction = $this->SortDirection;
-        }
-        else {
+        } else {
             return null;
         }
 
@@ -563,6 +591,7 @@ class SearchEngine extends DataObject implements PermissionProvider
                 if ($direction) {
                     $sql .= ' ' . $direction;
                 }
+
                 return $sql;
             }
         }
@@ -581,13 +610,11 @@ class SearchEngine extends DataObject implements PermissionProvider
         if (!$sortConfig) {
             return null;
         }
-        if (isset($sortConfig[$mode])) {
-            return $sortConfig[$mode];
-        }
-        return null;
+
+        return $sortConfig[$mode] ?? null;
     }
 
-    public function getSortFields($sortFieldName, $directionFieldName, $key)
+    public function getSortFields($sortFieldName, $directionFieldName, $key): ?array
     {
         $sortConfig = $this->getEngineSortConfig($key);
         if (!$sortConfig) {
@@ -601,6 +628,7 @@ class SearchEngine extends DataObject implements PermissionProvider
             if (strtolower($mode) === 'default') {
                 continue;
             }
+
             $sortSource[$mode] = $settings['name'];
             if (isset($settings['direction'])) {
                 $direction = strtolower($settings['direction']);
@@ -608,8 +636,7 @@ class SearchEngine extends DataObject implements PermissionProvider
                     $directionsMap[$mode] = [
                         'ASC' => 'Ascending'
                     ];
-                }
-                else if ($direction === 'desc') {
+                } elseif ($direction === 'desc') {
                     $directionsMap[$mode] = [
                         'DESC' => 'Descending'
                     ];
@@ -617,15 +644,10 @@ class SearchEngine extends DataObject implements PermissionProvider
             }
         }
 
-        $directionsSource = function($mode) use ($directionsMap) {
-            if (isset($directionsMap[$mode])) {
-                return $directionsMap[$mode];
-            }
-            return [
-                'ASC' => 'Ascending',
-                'DESC' => 'Descending'
-            ];
-        };
+        $directionsSource = (fn($mode): array => $directionsMap[$mode] ?? [
+            'ASC' => 'Ascending',
+            'DESC' => 'Descending'
+        ]);
 
         $sortField = DropdownField::create(
             $sortFieldName,
@@ -654,16 +676,17 @@ class SearchEngine extends DataObject implements PermissionProvider
         if (!$config) {
             return null;
         }
+
         if (!is_array($config)) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 '$engine_sort_config must be an array on ' . static::class
             );
         }
-        if (
-            !isset($config['direct'])
+
+        if (!isset($config['direct'])
             && !isset($config['fields'])
         ) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 'You must set at least one of $fields or $direct '
                 . 'values in $engine_sort_config on ' . static::class
             );
@@ -672,8 +695,7 @@ class SearchEngine extends DataObject implements PermissionProvider
         if ($key) {
             if (isset($config[$key])) {
                 $config = $config[$key];
-            }
-            else {
+            } else {
                 $config = null;
             }
         }
@@ -687,28 +709,34 @@ class SearchEngine extends DataObject implements PermissionProvider
         if (!$this->isInDB()) {
             return null;
         }
+
         $classes = self::$search_page_classes;
         if (count($classes) < 1) {
             return null;
         }
+
         $pageIDs = [];
         $filter = ['SearchEngineID' => $this->ID];
         foreach ($classes as $class) {
             if (!$includeSubclasses) {
                 $filter['ClassName'] = $class;
             }
+
             $pages = $class::get()->filter($filter);
             $pageIDs = array_merge($pageIDs, $pages->columnUnique('ID'));
             unset($filter['ClassName']);
         }
+
         if (count($pageIDs) < 1) {
             return null;
         }
+
         $commonClass = CommonAncestor::get_closest($classes);
         $searchPages = $commonClass::get()->filter('ID', $pageIDs);
         if ($searchPages->count() > 0) {
             return $searchPages;
         }
+
         return null;
     }
 
@@ -716,64 +744,71 @@ class SearchEngine extends DataObject implements PermissionProvider
     {
         $class = $this->config()->get('engine_entry_class');
         if (!$class) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 '$engine_entry_class must be set on ' . static::class
             );
         }
+
         if (!ClassInfo::exists($class)) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 'A non-existent class "' . $class
                 . '"has been set as $engine_entry_class on ' . static::class
             );
         }
+
         if (!ClassInfo::classImplements($class, SearchEngineEntry::class)) {
-            throw new \UnexpectedValueException(
+            throw new UnexpectedValueException(
                 'The class "' . $class
                 . '"has been set as $engine_entry_class on ' . static::class
                 . ' but does not implement ' . SearchEngineEntry::class
             );
         }
+
         return $class;
     }
 
-    public function isConfigured()
+    public function isConfigured(): bool
     {
         try {
             $this->getEntryClass();
             $this->getEngineConfig();
             return true;
-
-        } catch (\Exception $exception) {
+        } catch (Exception) {
             return false;
         }
     }
 
-    public function canCreate($member = null, $context = [])
+    #[Override]
+    public function canCreate($member = null, $context = []): bool
     {
         return false;
     }
 
+    #[Override]
     public function canView($member = null)
     {
         return Permission::checkMember($member, 'MANAGE_SEARCH');
     }
 
+    #[Override]
     public function canEdit($member = null)
     {
         return Permission::checkMember($member, 'MANAGE_SEARCH');
     }
 
-    public function canDelete($member = null)
+    #[Override]
+    public function canDelete($member = null): bool
     {
         return false;
     }
 
-    public function providePermissions() {
+    public function providePermissions(): array
+    {
         return [
-            'MANAGE_SEARCH' => array(
+            'MANAGE_SEARCH' => [
                 'name' => 'Manage search',
                 'category' => 'Search engines',
-            )
+            ]
         ];
     }
 }
