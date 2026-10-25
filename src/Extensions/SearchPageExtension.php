@@ -39,7 +39,7 @@ class SearchPageExtension extends Extension
     public function SearchLink($searchPhrase = null, ?int $sourcePageID = null): string
     {
         $getVarName = $this->getOwner()->getSearchGetVarName();
-        $queryString = '?' . $getVarName . '=' . urlencode($searchPhrase);
+        $queryString = '?' . $getVarName . '=' . urlencode($searchPhrase ?? '');
         if ($sourcePageID && $sourcePageID > 0) {
             $sourceGetVarName = $this->getOwner()->getSearchSourceGetVarName();
             $queryString .= '&' . $sourceGetVarName . '=' . urlencode($sourcePageID);
@@ -54,7 +54,7 @@ class SearchPageExtension extends Extension
     public function AbsoluteSearchLink($searchPhrase = null, ?int $sourcePageID = null): string
     {
         $getVarName = $this->getOwner()->getSearchGetVarName();
-        $queryString = '?' . $getVarName . '=' . urlencode($searchPhrase);
+        $queryString = '?' . $getVarName . '=' . urlencode($searchPhrase ?? '');
         if ($sourcePageID && $sourcePageID > 0) {
             $sourceGetVarName = $this->getOwner()->getSearchSourceGetVarName();
             $queryString .= '&' . $sourceGetVarName . '=' . urlencode($sourcePageID);
