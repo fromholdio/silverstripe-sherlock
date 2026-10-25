@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Fromholdio\Sherlock\Admin;
 
 use Fromholdio\Sherlock\Model\SearchEngine;
