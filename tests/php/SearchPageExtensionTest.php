@@ -50,11 +50,36 @@ class SearchPageExtensionTest extends SapphireTest
     }
 
     #[DataProvider('provideLinks')]
-    public function testAbsoluteSearchLink(?string $phrase, ?int $sourcePageID, string $expectedQuery): void
+    public function testSearchAbsoluteLink(?string $phrase, ?int $sourcePageID, string $expectedQuery): void
+    {
+        $page = $this->createSearchPage();
+        $link = $this->callWithoutDeprecations(fn () => $page->SearchAbsoluteLink($phrase, $sourcePageID));
+        $this->assertSame('https://www.example.com/search' . $expectedQuery, $link);
+    }
+
+    /**
+     * AbsoluteSearchLink() is the older name of SearchAbsoluteLink(), kept for existing callers.
+     */
+    #[DataProvider('provideLinks')]
+    public function testAbsoluteSearchLinkAlias(?string $phrase, ?int $sourcePageID, string $expectedQuery): void
     {
         $page = $this->createSearchPage();
         $link = $this->callWithoutDeprecations(fn () => $page->AbsoluteSearchLink($phrase, $sourcePageID));
         $this->assertSame('https://www.example.com/search' . $expectedQuery, $link);
+    }
+
+    public function testLinksWithoutArguments(): void
+    {
+        $page = $this->createSearchPage();
+        $this->assertSame('/search?q=', $this->callWithoutDeprecations(fn () => $page->SearchLink()));
+        $this->assertSame(
+            'https://www.example.com/search?q=',
+            $this->callWithoutDeprecations(fn () => $page->SearchAbsoluteLink())
+        );
+        $this->assertSame(
+            'https://www.example.com/search?q=',
+            $this->callWithoutDeprecations(fn () => $page->AbsoluteSearchLink())
+        );
     }
 
     protected function createSearchPage(): TestSearchPage

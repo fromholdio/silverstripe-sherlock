@@ -51,7 +51,10 @@ class SearchPageExtension extends Extension
         );
     }
 
-    public function AbsoluteSearchLink($searchPhrase = null, ?int $sourcePageID = null): string
+    /**
+     * Absolute version of {@see SearchLink()}, named after the framework's AbsoluteLink().
+     */
+    public function SearchAbsoluteLink($searchPhrase = null, ?int $sourcePageID = null): string
     {
         $getVarName = $this->getOwner()->getSearchGetVarName();
         $queryString = '?' . $getVarName . '=' . urlencode($searchPhrase ?? '');
@@ -64,6 +67,15 @@ class SearchPageExtension extends Extension
             $this->getOwner()->AbsoluteLink(),
             $queryString
         );
+    }
+
+    /**
+     * Alias of {@see SearchAbsoluteLink()}, kept for existing callers. New code should
+     * call SearchAbsoluteLink().
+     */
+    public function AbsoluteSearchLink($searchPhrase = null, ?int $sourcePageID = null): string
+    {
+        return $this->getOwner()->SearchAbsoluteLink($searchPhrase, $sourcePageID);
     }
 
     public function updateCMSFields(FieldList $fields): void
