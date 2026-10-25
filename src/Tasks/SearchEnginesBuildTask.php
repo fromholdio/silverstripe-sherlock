@@ -17,13 +17,10 @@ use Symfony\Component\Console\Input\InputInterface;
 
 class SearchEnginesBuildTask extends BuildTask
 {
-    #[Override]
     protected string $title = "Build Search Engine Manifests";
 
-    #[Override]
     protected static string $description = "Only needs to be called once on production, or to re-build the search engines";
 
-    #[Override]
     protected static string $commandName = 'search-manifest-build';
 
     #[Override]

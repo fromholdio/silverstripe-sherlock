@@ -24,10 +24,8 @@ class SearchAdmin extends ModelAdmin
 
     private static string $menu_icon_class = 'font-icon-search';
 
-    #[Override]
     public $showImportForm = false;
 
-    #[Override]
     public $showSearchForm = false;
 
     #[Override]
